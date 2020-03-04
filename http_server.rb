@@ -1,16 +1,20 @@
 require "socket"
+require "rack"
+require "rack/lobster"
 
 server = TCPServer.new 5678
+app    = Rack::Lobster.new
 
 while session = server.accept
   request = session.gets
-  
   puts request
 
-  session.print "HTTP/1.1 200\r\n"
-  session.print "Content-Type: text/html\r\n"
+  status, headers, body = app.call({})
+
+  session.print "HTTP/1.1 #{status}\r\n"
+  headers.each{ |key, value| session.print "#{key}: #{value}\r\n" }
   session.print "\r\n"
-  session.print "Hello World! The time is #{Time.now}"
+  body.each{ |part| session.print part }
 
   session.close
 end
